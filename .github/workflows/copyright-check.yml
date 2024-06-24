@@ -1,0 +1,34 @@
+# An action to check that all new sources include a copyright notice.
+name: copyright-check
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Fetch master
+        run: |
+          git fetch --no-tags --prune --depth=1 origin master
+      - name: debug
+        run: git diff origin/master HEAD --diff-filter=d --name-only
+
+      - name: debug2
+        run: git diff origin/master HEAD --diff-filter=d --name-only | xargs grep --include=\*.{ts,kt} -iL "copyright"
+
+      - name: Check Kotlin & Typescript source
+        # Get all files that are different from the default branch (excluding
+        # deleted files), if they are either Typescript or Kotlin files,
+        # output the list of files who do not contain "copyright" (case
+        # insensitive).
+        # In this case, we want to exit the check with an error.
+        run: git diff origin/master HEAD --diff-filter=d --name-only | xargs grep --include=\*.{ts,kt} -iL "copyright" && exit 3
+
+      - name: Check build files
+        run: git diff origing/master HEAD --diff-filter=d --name-only | xargs grep --include=BUILD -iL "licenses" && exit 4
+
